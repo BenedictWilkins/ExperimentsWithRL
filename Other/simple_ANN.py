@@ -9,7 +9,8 @@ Created on Mon Mar  4 14:08:44 2019
 import torch.nn as nn
 import torch
 import numpy as np
-from Animation import SurfaceAnimation
+from pyworld.animation import SurfaceAnimation
+import os
 
 #single linear layer of a network W.T*X
 l = nn.Linear(2,5)
@@ -72,7 +73,7 @@ class ANN(nn.Module):
 
 
 
-def run_xor_ann(animated=False, epochs=10000):
+def run_xor_ann(animated=False, epochs=10000, device='cpu'):
     
     def iterate_batches(data, batch_size=1):
         (X, Y) = data
@@ -82,7 +83,7 @@ def run_xor_ann(animated=False, epochs=10000):
         yield X[i:data_len], Y[i:data_len], epoch
     
     data = ([[0,0],[1,0],[0,1],[1,1]], [0,1,1,0]) #XOR
-    net = ANN(2,1)
+    net = ANN(2,1).to(device)
     loss_function = nn.MSELoss()
     optimizer = torch.optim.Adam(net.parameters())
     optimizer.zero_grad()
@@ -103,12 +104,12 @@ def run_xor_ann(animated=False, epochs=10000):
         y = np.copy(animation.Y)
         x_ = x.reshape(x.shape[0]*x.shape[1])
         y_ = y.reshape(y.shape[0]*y.shape[1])
-        animation_data = torch.as_tensor(np.vstack((x_,y_)).T,dtype=torch.float32)
+        animation_data = torch.as_tensor(np.vstack((x_,y_)).T,dtype=torch.float32).to(device)
         
     for epoch in range(epochs):    
         for batch_samples, batch_labels, epoch in iterate_batches(data, batch_size=1):
-            batch_samples_t = torch.FloatTensor(batch_samples) #input tensor         
-            batch_labels_t = torch.FloatTensor(batch_labels)   #targets
+            batch_samples_t = torch.FloatTensor(batch_samples).to(device) #input tensor         
+            batch_labels_t = torch.FloatTensor(batch_labels).to(device)   #targets
             #print(batch_samples_t)
             out_t = net(batch_samples_t)                  #predictions  
             loss_t = loss_function(out_t, batch_labels_t) # compute loss     
@@ -119,36 +120,51 @@ def run_xor_ann(animated=False, epochs=10000):
         if epoch % PRINTLOSS == 0: #print the current loss
             print("epoch: ", epoch, "loss: ", loss_t.item())
             net.eval()
-            it = torch.FloatTensor(data[0])
-            ht = torch.FloatTensor(np.array(data[1]).reshape(4,1))
+            it = torch.FloatTensor(data[0]).to(device)
+            ht = torch.FloatTensor(np.array(data[1]).reshape(4,1)).to(device)
             ot = net(it)
-            print(torch.cat((it,ht,ot),1).detach().numpy())
+            print(torch.cat((it,ht,ot),1).to('cpu').detach().numpy())
             net.train()
             
         if animated and epoch % ANIFRAME == 0: #add frame to animation
             net.eval()
             out_animation = net(animation_data)
-            out_animation = out_animation.detach().numpy().reshape((x.shape[0],x.shape[1]))
+            out_animation = out_animation.to('cpu').detach().numpy().reshape((x.shape[0],x.shape[1]))
             frames.append(out_animation)
             net.train()
                   
     return net, animation
+
+device = 'cpu'
+print('CUDA available:', torch.cuda.is_available())
+if torch.cuda.is_available(): 
+    device = 'cuda'
+    print('CUDA using device: ', torch.cuda.get_device_name(torch.cuda.current_device()))
     
-xor_net, ani = run_xor_ann(animated = True, epochs=10000)
+    
+xor_net, ani = run_xor_ann(animated = True, epochs=10000, device=device)
 ani.show()
+
 
 
 # Models can be saved and loaded using torch.save(model.state_dict(), PATH) and model.load_state_dict(torch.load(PATH))
 # Example below
+MODEL_NAME = "xor_ann.pt"
+PATH = "models/"
+
+if not os.path.exists(PATH):
+    os.makedirs(PATH)
+
+
+
+#save
+torch.save(xor_net.state_dict(), PATH + MODEL_NAME)
 print("\n\n")
 print("Saved net:", xor_net.state_dict())
 
-PATH = "models/xor_ann.pt"
-#save
-torch.save(xor_net.state_dict(), PATH)
 #load
 l_net = ANN(2,1)
-l_net.load_state_dict(torch.load(PATH))
+l_net.load_state_dict(torch.load(PATH + MODEL_NAME))
 l_net.eval()
 print("\n\n")
 print("Loaded net:", l_net.state_dict())

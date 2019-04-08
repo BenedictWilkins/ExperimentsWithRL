@@ -112,9 +112,12 @@ class PolicyGradientAgentImproved(pyw.LearningAgent):
     def __init__(self, net, gamma = 0.99, learning_rate = 0.01, batch_size = 16, entropy_beta = 0.01, debug = None):
         sensors = [pyw.UnrollSensor(self.sense, gamma, 6)]
         actuators = [pyw.ProbabilisticActuator()]
-        super(PolicyGradientAgentImproved,self).__init__(model=net,optimizer=optim.Adam(net.parameters(), lr=learning_rate),
-                                                         batch_labels=['state','action','g'], batch_size=batch_size, 
-                                                         sensors = sensors, actuators = actuators)
+        super(PolicyGradientAgentImproved,self).__init__(model=net,
+                                                         optimizer=optim.Adam(net.parameters(), lr=learning_rate),
+                                                         batch_labels=['state','action','g'], 
+                                                         batch_size=batch_size, 
+                                                         sensors = sensors, 
+                                                         actuators = actuators)
         self.entropy_beta = entropy_beta
         self.baseline = 0
 
@@ -129,6 +132,7 @@ class PolicyGradientAgentImproved(pyw.LearningAgent):
         #moving average of baseline (mean unrolled reward)
         self.baseline = self.baseline + ((unrolled_reward - self.baseline) / time.global_step)
         
+        # add observation to thecurrent batch 
         self.batch.state.append(pstate)
         self.batch.action.append(int(action))
         self.batch.g.append(unrolled_reward - self.baseline)

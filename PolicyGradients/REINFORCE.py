@@ -18,9 +18,6 @@ class PolicyGradientAgent(common.Agent):
         self.gamma = gamma
         self.learning_rate = 0.01
     
-    
-    
-    
     def q_values(self, rewards):
         res = []
         sum_r = 0.0
@@ -29,8 +26,6 @@ class PolicyGradientAgent(common.Agent):
             sum_r += r
             res.append(sum_r)
         return list(reversed(res))
-        
-        
         
         
 class PolicyGradientNetwork(nn.Module):

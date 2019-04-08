@@ -46,10 +46,6 @@ class ANN(nn.Module):
 # the tuple is the input args to the forward function of the module
 writer.add_graph(ANN(10,10), (torch.FloatTensor(np.zeros((1,10))))) 
 
-
-
 writer.close()
-
-
 
 #command - tensorboard --logdir runs (or what ever name was given in SummaryWritterz)
