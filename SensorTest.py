@@ -39,47 +39,9 @@ class SensorTestAgent(pwag.Agent):
        
     def attempt(self, _):
         self.actuators[0]()
-    
 
-class GymImageSensor:
     
-    def __init__(self, frames=4):
-        self.transform = GymImageTransform()
-        self.buffer = np.zeros(self.transform.out_shape)
-        
-    def __call__(self, obs):
-        state, action, reward, nstate, time = obs
-
-
-class StateTransform(ABC):
-    
-    def __init__(self):
-        pass
-    
-    @abstractmethod
-    def __call__(self, state):
-        pass
-    
-class GymImageTransform(StateTransform):
-    
-    def __init__(self, out_shape=[1,84,84]):
-        self.in_shape = [-1, -1, 3]
-        self.out_shape = out_shape
-    
-    def __call__(self, state):
-        if state.size == 210 * 160 * 3:
-             img = np.reshape(state, [210, 160, 3]).astype(np.float32)
-        elif state.size == 250 * 160 * 3:
-            img = np.reshape(state, [250, 160, 3]).astype(np.float32)
-        else:
-            assert False, "Unknown resolution."
-        img = (img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114) 
-        img = cv2.resize(img, (84, 110), interpolation=cv2.INTER_AREA)
-        return np.reshape(img[18:102, :], [1, 84, 84]) / 255.0
-    
-       
-    
-    
+'''
 if __name__ == "__main__":
 
     env = gym.make('Assault-v0')
@@ -93,21 +55,6 @@ if __name__ == "__main__":
            sim.stop()
              
     cv2.destroyAllWindows()
-
-
 '''
-class BufferWrapper(gym.ObservationWrapper):
-    def __init__(self, env, n_steps, dtype=np.float32):
-        super(BufferWrapper, self).__init__(env)
-        self.dtype = dtype
-        old_space = env.observation_space
-        self.observation_space = gym.spaces.Box(old_space.low.repeat(n_steps, axis=0),
-                                                old_space.high.repeat(n_steps, axis=0), dtype=dtype)
 
-    def reset(self):
-        self.buffer = np.zeros_like(self.observation_space.low, dtype=self.dtype)
-        return self.observation(self.env.reset())
 
-    def observation(self, observation):
-        
-'''

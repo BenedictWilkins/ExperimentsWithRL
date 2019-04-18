@@ -135,6 +135,8 @@ if __name__ == "__main__":
     for t in sim:
         if t.done or t.step > 2000:
              sim.stop()
+             
+    env.close()
     
    
 

@@ -21,7 +21,7 @@ class PolicyGradientAgent(pwag.LearningAgent):
         Implementaion of a PolicyGradientAgent that uses entropy regularisation and a baseline.
     '''
     
-    def __init__(self, net, gamma = 0.99, learning_rate = 0.001, batch_size = 8, reward_steps = 10, entropy_beta = 0.01, debug = None):
+    def __init__(self, net, gamma = 0.99, learning_rate = 0.001, batch_size = 8, reward_steps = 6, entropy_beta = 0.01, debug = None):
         sensors = [pwag.UnrollSensor(batch_size, self.sense, gamma, reward_steps)]
         actuators = [pwag.ProbabilisticActuator()]
         super(PolicyGradientAgent,self).__init__(model=net,
@@ -47,11 +47,11 @@ class PolicyGradientAgent(pwag.LearningAgent):
             Performs one gradient step using the current batch
         '''
         self.optimizer.zero_grad()
-        states_v = torch.FloatTensor(batch.pstate)
+        states_v = torch.FloatTensor(batch.state)
         actions_v = torch.LongTensor(batch.action)
         rewards_v = torch.FloatTensor(batch.reward)
         #moving average of baseline (mean unrolled reward)
-        for j in range(len(batch.pstate)):
+        for j in range(len(batch.reward)):
             self.i += 1
             self.baseline = self.baseline + ((batch.reward[j] - self.baseline) / (self.i))
         #print(states_v)
